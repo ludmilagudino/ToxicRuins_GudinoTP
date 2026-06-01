@@ -22,6 +22,9 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Game State")
 	bool bPartidaEnCurso;
 
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Game State")
+	FString NombreGanador;
+
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

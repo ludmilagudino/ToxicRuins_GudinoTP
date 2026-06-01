@@ -11,12 +11,16 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "ToxicRuins_GudinoTP.h"
+#include "CollectableResource.h"
+#include "DeliveryPoint.h"
+#include "Engine/OverlapResult.h"
+#include "Net/UnrealNetwork.h"
 
 AToxicRuins_GudinoTPCharacter::AToxicRuins_GudinoTPCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-		
+
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -48,13 +52,25 @@ AToxicRuins_GudinoTPCharacter::AToxicRuins_GudinoTPCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	// Inicializar variables de pickup
+	bTieneObjeto = false;
+	ObjetoAgarrado = nullptr;
+}
+
+void AToxicRuins_GudinoTPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Replicar bTieneObjeto a todos los clientes
+	DOREPLIFETIME(AToxicRuins_GudinoTPCharacter, bTieneObjeto);
 }
 
 void AToxicRuins_GudinoTPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-		
+
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
@@ -134,26 +150,124 @@ void AToxicRuins_GudinoTPCharacter::DoJumpEnd()
 
 void AToxicRuins_GudinoTPCharacter::PickupObjeto()
 {
-	// Por ahora solo un mensaje de debug
-	if (GEngine)
+	if (!HasAuthority())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Objeto agarrado"));
+		Server_PickupObjeto();
+		return;
 	}
 
-	// - Detectar qué objeto está cerca
-	// - Guardarlo en ObjetoAgarrado
-	// - Adjuntarlo al personaje
+	// Si ya tengo un objeto agarrado, no agarrar otro
+	if (bTieneObjeto)
+	{
+		Client_MostrarMensaje(TEXT("Ya tenés un objeto!"), FLinearColor::Red);
+		return;
+	}
+
+	// Line Trace desde la cámara hacia adelante
+	FVector StartLocation = GetFollowCamera()->GetComponentLocation();
+	FVector ForwardVector = GetFollowCamera()->GetForwardVector();
+	FVector EndLocation = StartLocation + (ForwardVector * 500.0f); // 500cm de alcance
+
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	// Trace con grosor para facilitar pickup
+	bool bHit = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		StartLocation,
+		EndLocation,
+		FQuat::Identity,
+		ECC_Visibility,
+		FCollisionShape::MakeSphere(100.0f),
+		QueryParams
+	);
+
+	// Si golpeó algo
+	if (bHit)
+	{
+		// Verificar si es un CollectableResource
+		ACollectableResource* Recurso = Cast<ACollectableResource>(HitResult.GetActor());
+
+		if (Recurso != nullptr)
+		{
+			// Llamar función del recurso
+			Recurso->SerAgarrado(this);
+
+			// Guardar referencia y marcar que tenemos objeto
+			ObjetoAgarrado = Recurso;
+			bTieneObjeto = true;
+
+			Client_MostrarMensaje(TEXT("Recurso agarrado!"), FLinearColor::Green);
+		}
+	}
 }
 
 void AToxicRuins_GudinoTPCharacter::DropObjeto()
 {
-	// Por ahora solo un mensaje de debug
-	if (GEngine)
+	if (!HasAuthority())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Objeto dropeado"));
+		Server_DropObjeto();
+		return;
 	}
 
-	// - Soltar el ObjetoAgarrado
-	// - Verificar si estamos en zona de entrega
-	// - Sumar puntos
+	// Verificar que tengamos un objeto agarrado
+	if (!bTieneObjeto)
+	{
+		Client_MostrarMensaje(TEXT("No tenés ningún objeto para entregar!"), FLinearColor::Red);
+		return;
+	}
+
+	// Buscar un DeliveryPoint cercano
+	TArray<FOverlapResult> Overlaps;
+	FVector PlayerLocation = GetActorLocation();
+	float Radio = 300.0f; // 3 metros
+
+	GetWorld()->OverlapMultiByChannel(
+		Overlaps,
+		PlayerLocation,
+		FQuat::Identity,
+		ECC_Visibility,
+		FCollisionShape::MakeSphere(Radio)
+	);
+
+	// Buscar un DeliveryPoint en los overlaps
+	ADeliveryPoint* PuntoEntrega = nullptr;
+	for (FOverlapResult& Overlap : Overlaps)
+	{
+		PuntoEntrega = Cast<ADeliveryPoint>(Overlap.GetActor());
+		if (PuntoEntrega != nullptr)
+		{
+			break;
+		}
+	}
+
+	if (PuntoEntrega != nullptr)
+	{
+		// Entregar el recurso
+		PuntoEntrega->EntregarRecurso(this);
+	}
+	else
+	{
+		// No hay punto de entrega cerca
+		Client_MostrarMensaje(TEXT("No hay zona de entrega cerca!"), FLinearColor(1.0f, 0.5f, 0.0f, 1.0f));
+	}
+}
+
+void AToxicRuins_GudinoTPCharacter::Server_PickupObjeto_Implementation()
+{
+	PickupObjeto();
+}
+
+void AToxicRuins_GudinoTPCharacter::Server_DropObjeto_Implementation()
+{
+	DropObjeto();
+}
+
+void AToxicRuins_GudinoTPCharacter::Client_MostrarMensaje_Implementation(const FString& Mensaje, FLinearColor Color)
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, Color.ToFColor(true), Mensaje);
+	}
 }
