@@ -15,6 +15,7 @@
 #include "DeliveryPoint.h"
 #include "Engine/OverlapResult.h"
 #include "Net/UnrealNetwork.h"
+#include "ToxicGameMode.h"
 
 AToxicRuins_GudinoTPCharacter::AToxicRuins_GudinoTPCharacter()
 {
@@ -56,6 +57,9 @@ AToxicRuins_GudinoTPCharacter::AToxicRuins_GudinoTPCharacter()
 	// Inicializar variables de pickup
 	bTieneObjeto = false;
 	ObjetoAgarrado = nullptr;
+
+	//variable participantes vivos
+	bEstaVivo = true;
 }
 
 void AToxicRuins_GudinoTPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -64,6 +68,8 @@ void AToxicRuins_GudinoTPCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeP
 
 	// Replicar bTieneObjeto a todos los clientes
 	DOREPLIFETIME(AToxicRuins_GudinoTPCharacter, bTieneObjeto);
+
+	DOREPLIFETIME(AToxicRuins_GudinoTPCharacter, bEstaVivo);
 }
 
 void AToxicRuins_GudinoTPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -269,5 +275,50 @@ void AToxicRuins_GudinoTPCharacter::Client_MostrarMensaje_Implementation(const F
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, Color.ToFColor(true), Mensaje);
+	}
+}
+
+void AToxicRuins_GudinoTPCharacter::Multicast_JugadorMurio_Implementation()
+{
+	// todos ven al personaje desaparecer
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+
+	// mensaje en pantalla
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Murió un jugador"));
+	}
+
+	// sonido
+	BP_ReproducirSonidoMuerte();
+}
+
+void AToxicRuins_GudinoTPCharacter::MorirJugador()
+{
+	// procesar la muerte
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	// muerto
+	bEstaVivo = false;
+
+	// deshabilitar input
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (PC)
+	{
+		PC->DisableInput(PC);
+	}
+
+	// notificar a todos
+	Multicast_JugadorMurio();
+
+	// que  GameMode que verifique jugadores vivos
+	AToxicGameMode* GM = Cast<AToxicGameMode>(GetWorld()->GetAuthGameMode());
+	if (GM)
+	{
+		GM->VerificarJugadoresVivos();
 	}
 }

@@ -119,3 +119,49 @@ void AToxicGameMode::VerificarCondicionVictoria()
 		}
 	}
 }
+
+void AToxicGameMode::VerificarJugadoresVivos()
+{
+	AToxicGameState* GS = GetGameState<AToxicGameState>();
+	if (!GS || !GS->bPartidaEnCurso)
+	{
+		return;
+	}
+
+	int32 JugadoresVivos = 0;
+	APlayerState* UltimoVivo = nullptr;
+
+	for (APlayerState* PS : GS->PlayerArray)
+	{
+		AToxicRuins_GudinoTPCharacter* Character = Cast<AToxicRuins_GudinoTPCharacter>(PS->GetPawn());
+		if (Character && Character->bEstaVivo)
+		{
+			JugadoresVivos++;
+			UltimoVivo = PS;
+		}
+	}
+
+	// Si queda 1 o menos jugadores vivos, terminar partida
+	if (JugadoresVivos <= 1)
+	{
+		FString NombreGanador = UltimoVivo ? UltimoVivo->GetPlayerName() : TEXT("Nadie");
+		NotificarFinPartida(NombreGanador + TEXT(" es el último sobreviviente!"));
+		TerminarPartida();
+	}
+}
+
+void AToxicGameMode::NotificarFinPartida(const FString& NombreGanador)
+{
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		APlayerController* PC = It->Get();
+		if (PC)
+		{
+			AToxicRuins_GudinoTPCharacter* Character = Cast<AToxicRuins_GudinoTPCharacter>(PC->GetPawn());
+			if (Character)
+			{
+				Character->Client_MostrarMensaje(NombreGanador, FLinearColor::Yellow);
+			}
+		}
+	}
+}

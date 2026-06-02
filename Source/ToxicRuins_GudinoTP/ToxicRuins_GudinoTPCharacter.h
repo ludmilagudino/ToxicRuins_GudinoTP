@@ -111,6 +111,22 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_MostrarMensaje(const FString& Mensaje, FLinearColor Color);
 
+	// Variable para saber si el jugador está vivo
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Player")
+	bool bEstaVivo;
+
+	// Función del servidor para procesar la muerte
+	UFUNCTION(BlueprintCallable, Category = "Player")
+	void MorirJugador();
+
+	// NetMulticast para efecto de muerte
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void Multicast_JugadorMurio();
+
+	// Evento solo el sonido
+	UFUNCTION(BlueprintImplementableEvent, Category = "Audio")
+	void BP_ReproducirSonidoMuerte();
+
 	// Replicación
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

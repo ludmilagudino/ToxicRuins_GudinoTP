@@ -13,18 +13,22 @@
 ADeliveryPoint::ADeliveryPoint()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
-	// plataforma 
+	// Crear componente raíz vacío
+	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	RootComponent = Root;
+
+	// Mesh se adjunta al root
 	PlatformMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlatformMesh"));
-	RootComponent = PlatformMesh;
+	PlatformMesh->SetupAttachment(RootComponent);
 
-	// trigger (box)
+	// Trigger se adjunta al root
 	TriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerBox"));
 	TriggerBox->SetupAttachment(RootComponent);
-	TriggerBox->SetBoxExtent(FVector(200.0f, 200.0f, 100.0f)); // Tamaño del área (ajustable)
+	TriggerBox->SetBoxExtent(FVector(200.0f, 200.0f, 100.0f));
 
-	// colision del trigger (solo overlap, no bloquea)
+	// Solo overlap, no bloquea
 	TriggerBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	TriggerBox->SetCollisionResponseToAllChannels(ECR_Ignore);
 	TriggerBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
@@ -46,7 +50,6 @@ void ADeliveryPoint::BeginPlay()
 void ADeliveryPoint::OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// Ignorar si no es la cápsula del jugador
 	if (!OtherComp->IsA<UCapsuleComponent>())
 	{
 		return;
@@ -55,7 +58,11 @@ void ADeliveryPoint::OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	AToxicRuins_GudinoTPCharacter* Jugador = Cast<AToxicRuins_GudinoTPCharacter>(OtherActor);
 	if (Jugador != nullptr)
 	{
-		// Mostrar mensaje solo al jugador que entro
+		// AGREGAR a la lista
+		if (!JugadoresEnZona.Contains(OtherActor))
+		{
+			JugadoresEnZona.Add(OtherActor);
+		}
 		Jugador->Client_MostrarMensaje(TEXT("Entraste a la zona de entrega!"), FLinearColor::Blue);
 	}
 }
@@ -63,7 +70,6 @@ void ADeliveryPoint::OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedCompon
 void ADeliveryPoint::OnTriggerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	// Ignorar si no es la cápsula del jugador
 	if (!OtherComp->IsA<UCapsuleComponent>())
 	{
 		return;
@@ -72,11 +78,11 @@ void ADeliveryPoint::OnTriggerEndOverlap(UPrimitiveComponent* OverlappedComponen
 	AToxicRuins_GudinoTPCharacter* Jugador = Cast<AToxicRuins_GudinoTPCharacter>(OtherActor);
 	if (Jugador != nullptr)
 	{
-		// Mostrar mensaje solo al jugador que salio
+		// SACAR de la lista
+		JugadoresEnZona.Remove(OtherActor);
 		Jugador->Client_MostrarMensaje(TEXT("Saliste de la zona de entrega!"), FLinearColor::White);
 	}
 }
-
 void ADeliveryPoint::EntregarRecurso(AActor* Jugador)
 {
 	
@@ -122,5 +128,33 @@ void ADeliveryPoint::EntregarRecurso(AActor* Jugador)
 		FString Mensaje = FString::Printf(TEXT("Recurso entregado! +%d puntos. Total: %d"),
 			PuntosRecompensa, PlayerState->Puntos);
 		Character->Client_MostrarMensaje(Mensaje, FLinearColor::Green);
+	}
+}
+
+void ADeliveryPoint::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	for (AActor* Actor : JugadoresEnZona)
+	{
+		AToxicRuins_GudinoTPCharacter* Jugador = Cast<AToxicRuins_GudinoTPCharacter>(Actor);
+		if (Jugador && Jugador->bEstaVivo)
+		{
+			AToxicPlayerState* PS = Jugador->GetPlayerState<AToxicPlayerState>();
+			if (PS && PS->Resistencia < 100.0f)
+			{
+				PS->Resistencia += 10.0f * DeltaTime;
+
+				if (PS->Resistencia > 100.0f)
+				{
+					PS->Resistencia = 100.0f;
+				}
+			}
+		}
 	}
 }

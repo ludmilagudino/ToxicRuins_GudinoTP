@@ -3,6 +3,7 @@
 #include "ToxicGameState.h"
 #include "Net/UnrealNetwork.h"
 
+
 void AToxicGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

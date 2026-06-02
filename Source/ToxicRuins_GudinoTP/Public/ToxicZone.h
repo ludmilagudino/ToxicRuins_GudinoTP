@@ -4,50 +4,45 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "DeliveryPoint.generated.h"
+#include "ToxicZone.generated.h"
 
 UCLASS()
-class TOXICRUINS_GUDINOTP_API ADeliveryPoint : public AActor
+class TOXICRUINS_GUDINOTP_API AToxicZone : public AActor
 {
 	GENERATED_BODY()
 
-public:
+public:	
 	// Sets default values for this actor's properties
-	ADeliveryPoint();
+	AToxicZone();
 
-	// plataforma
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+	// mesh visible de la zona toxica
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	class UStaticMeshComponent* PlatformMesh;
+	class UStaticMeshComponent* MeshComponent;
 
-	// detectar jugadores
+	// trigger para detectar jugadores
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UBoxComponent* TriggerBox;
 
-	// puntos  al entregar un recurso
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Delivery")
-	int32 PuntosRecompensa = 10;
-
-	// entregar recurso (Character  presiona E)
-	UFUNCTION(BlueprintCallable, Category = "Delivery")
-	void EntregarRecurso(AActor* Jugador);
+	// cuanta resistnecia baja por segundo
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Toxic Zone")
+	float DanioPorSegundo = 10.0f;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	virtual void Tick(float DeltaTime) override;
+	// jugadores dentro de la zona
+	UPROPERTY()
+	TArray<AActor*> JugadoresEnZona;
 
-	//  actor entra al trigger
 	UFUNCTION()
 	void OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	// actor sale del trigger
 	UFUNCTION()
 	void OnTriggerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	// Jugadores dentro de la zona de entrega
-	UPROPERTY()
-	TArray<AActor*> JugadoresEnZona;
 };

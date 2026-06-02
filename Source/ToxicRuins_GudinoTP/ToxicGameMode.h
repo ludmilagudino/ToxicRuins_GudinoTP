@@ -31,4 +31,7 @@ public:
 	void IniciarPartida();
 	void TerminarPartida();
 	void VerificarCondicionVictoria();
+
+	void VerificarJugadoresVivos();
+	void NotificarFinPartida(const FString& NombreGanador);
 };
