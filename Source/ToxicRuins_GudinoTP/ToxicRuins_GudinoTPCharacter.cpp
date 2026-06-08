@@ -16,6 +16,7 @@
 #include "Engine/OverlapResult.h"
 #include "Net/UnrealNetwork.h"
 #include "ToxicGameMode.h"
+#include "ToxicPlayerState.h"
 
 AToxicRuins_GudinoTPCharacter::AToxicRuins_GudinoTPCharacter()
 {
@@ -296,14 +297,19 @@ void AToxicRuins_GudinoTPCharacter::Multicast_JugadorMurio_Implementation()
 
 void AToxicRuins_GudinoTPCharacter::MorirJugador()
 {
-	// procesar la muerte
 	if (!HasAuthority())
 	{
 		return;
 	}
 
-	// muerto
 	bEstaVivo = false;
+
+	// Marcar en el PlayerState PRIMERO
+	AToxicPlayerState* PS = GetPlayerState<AToxicPlayerState>();
+	if (PS)
+	{
+		PS->bEstaVivo = false;
+	}
 
 	// deshabilitar input
 	APlayerController* PC = Cast<APlayerController>(GetController());
@@ -315,7 +321,7 @@ void AToxicRuins_GudinoTPCharacter::MorirJugador()
 	// notificar a todos
 	Multicast_JugadorMurio();
 
-	// que  GameMode que verifique jugadores vivos
+	// DESPUÉS verificar jugadores vivos
 	AToxicGameMode* GM = Cast<AToxicGameMode>(GetWorld()->GetAuthGameMode());
 	if (GM)
 	{

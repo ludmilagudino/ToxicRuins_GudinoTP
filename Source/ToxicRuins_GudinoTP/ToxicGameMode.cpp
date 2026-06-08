@@ -133,8 +133,8 @@ void AToxicGameMode::VerificarJugadoresVivos()
 
 	for (APlayerState* PS : GS->PlayerArray)
 	{
-		AToxicRuins_GudinoTPCharacter* Character = Cast<AToxicRuins_GudinoTPCharacter>(PS->GetPawn());
-		if (Character && Character->bEstaVivo)
+		AToxicPlayerState* ToxicPS = Cast<AToxicPlayerState>(PS);
+		if (ToxicPS && ToxicPS->bEstaVivo)
 		{
 			JugadoresVivos++;
 			UltimoVivo = PS;
@@ -145,9 +145,12 @@ void AToxicGameMode::VerificarJugadoresVivos()
 	if (JugadoresVivos <= 1)
 	{
 		FString NombreGanador = UltimoVivo ? UltimoVivo->GetPlayerName() : TEXT("Nadie");
+		GS->NombreGanador = NombreGanador;
 		NotificarFinPartida(NombreGanador + TEXT(" es el último sobreviviente!"));
 		TerminarPartida();
 	}
+
+
 }
 
 void AToxicGameMode::NotificarFinPartida(const FString& NombreGanador)

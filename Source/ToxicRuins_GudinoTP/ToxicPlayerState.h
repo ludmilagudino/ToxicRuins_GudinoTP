@@ -34,5 +34,6 @@ public:
 	// Función para configurar replicación
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Player State")
+	bool bEstaVivo = true;
 };

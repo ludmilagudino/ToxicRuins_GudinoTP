@@ -14,6 +14,7 @@ void AToxicPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME(AToxicPlayerState, Puntos);
 	DOREPLIFETIME(AToxicPlayerState, Resistencia);
+	DOREPLIFETIME(AToxicPlayerState, bEstaVivo);
 }
 
 void AToxicPlayerState::OnRep_Resistencia()
