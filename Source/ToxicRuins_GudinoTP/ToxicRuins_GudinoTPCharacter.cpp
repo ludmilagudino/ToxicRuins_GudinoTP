@@ -328,3 +328,11 @@ void AToxicRuins_GudinoTPCharacter::MorirJugador()
 		GM->VerificarJugadoresVivos();
 	}
 }
+
+void AToxicRuins_GudinoTPCharacter::Server_ReiniciarPartida_Implementation()
+{
+	if (!HasAuthority()) return;
+
+	// El ?listen es crítico — mantiene el Listen Server activo
+	GetWorld()->ServerTravel("/Game/Maps/Lvl_ThirdPerson?listen");
+}

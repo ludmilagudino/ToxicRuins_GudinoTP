@@ -127,6 +127,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Audio")
 	void BP_ReproducirSonidoMuerte();
 
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "Game")
+	void Server_ReiniciarPartida();
+
 	// Replicación
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
