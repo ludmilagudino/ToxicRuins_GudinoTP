@@ -15,7 +15,7 @@ class TOXICRUINS_GUDINOTP_API AToxicGameState : public AGameStateBase
 	GENERATED_BODY()
 
 public:
-	// Variables replicadas
+	// variables replicadas
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Game State")
 	float TiempoRestante;
 

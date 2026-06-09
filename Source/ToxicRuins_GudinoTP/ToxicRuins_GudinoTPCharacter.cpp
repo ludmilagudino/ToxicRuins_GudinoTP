@@ -321,7 +321,7 @@ void AToxicRuins_GudinoTPCharacter::MorirJugador()
 	// notificar a todos
 	Multicast_JugadorMurio();
 
-	// DESPUÉS verificar jugadores vivos
+	// DESPUES verificar jugadores vivos
 	AToxicGameMode* GM = Cast<AToxicGameMode>(GetWorld()->GetAuthGameMode());
 	if (GM)
 	{

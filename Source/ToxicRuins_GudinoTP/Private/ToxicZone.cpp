@@ -121,7 +121,7 @@ void AToxicZone::Tick(float DeltaTime)
                     // Debug muerte
                     if (GEngine)
                     {
-                        GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Jugador murió por resistencia!"));
+                        GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Jugador murió por resistencia"));
                     }
 
                     Jugador->MorirJugador();

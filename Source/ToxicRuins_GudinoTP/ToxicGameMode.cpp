@@ -7,7 +7,7 @@
 
 AToxicGameMode::AToxicGameMode()
 {
-	// Tick
+	// activar tick para descontar el tiempo en cada frame 
 	PrimaryActorTick.bCanEverTick = true;
 
 	GameStateClass = AToxicGameState::StaticClass();
@@ -23,6 +23,16 @@ void AToxicGameMode::BeginPlay()
 	Super::BeginPlay();
 
 	IniciarPartida();
+}
+
+void AToxicGameMode::IniciarPartida()
+{
+	AToxicGameState* GS = GetGameState<AToxicGameState>();
+	if (GS)
+	{
+		GS->TiempoRestante = TiempoTotal;
+		GS->bPartidaEnCurso = true;
+	}
 }
 
 void AToxicGameMode::Tick(float DeltaTime)
@@ -44,16 +54,6 @@ void AToxicGameMode::Tick(float DeltaTime)
 	}
 }
 
-void AToxicGameMode::IniciarPartida()
-{
-	AToxicGameState* GS = GetGameState<AToxicGameState>();
-	if (GS)
-	{
-		GS->TiempoRestante = TiempoTotal;
-		GS->bPartidaEnCurso = true;
-	}
-}
-
 void AToxicGameMode::TerminarPartida()
 {
 	AToxicGameState* GS = GetGameState<AToxicGameState>();
@@ -61,7 +61,7 @@ void AToxicGameMode::TerminarPartida()
 	{
 		GS->bPartidaEnCurso = false;
 
-		// Buscar al jugador con más puntos
+		// Busca jugador con mas puntos
 		APlayerState* Ganador = nullptr;
 		int32 MaxPuntos = -1;
 

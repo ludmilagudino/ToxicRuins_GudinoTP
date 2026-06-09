@@ -10,15 +10,15 @@ ACollectableResource::ACollectableResource()
 	// Set this actor to call Tick() every frame. You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	// Habilitar replicación
+	// replicación
 	bReplicates = true;
 
-	// Crear mesh component
+	// crear mesh component
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	RootComponent = MeshComponent;
+	//replico el mesh component asi cuando desaparezca visualmente el recurso en el servidor desaparezca tambien en los clientes
 	MeshComponent->SetIsReplicated(true);
 
-	// Inicializar variables
 	bFueAgarrado = false;
 }
 
@@ -41,7 +41,7 @@ void ACollectableResource::SerAgarrado(AActor* Jugador)
 		return;
 	}
 
-	// agarrado
+	// bool agarrado
 	bFueAgarrado = true;
 
 	// Debug

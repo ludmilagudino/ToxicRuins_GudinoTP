@@ -18,22 +18,22 @@ public:
 	AToxicPlayerState();
 
 	// Variables replicadas
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Player State")
+	bool bEstaVivo = true;
+
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Player State")
 	int32 Puntos;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Resistencia, BlueprintReadOnly, Category = "Player State")
 	float Resistencia;
 
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Player State")
-	int32 Equipo;
-
 	// RepNotify para Resistencia
 	UFUNCTION()
 	void OnRep_Resistencia();
 
-	// Función para configurar replicación
+	// configuracion de replicación
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Player State")
-	bool bEstaVivo = true;
+
 };
