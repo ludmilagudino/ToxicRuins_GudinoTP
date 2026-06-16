@@ -11,4 +11,5 @@ void AToxicGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AToxicGameState, TiempoRestante);
 	DOREPLIFETIME(AToxicGameState, bPartidaEnCurso);
 	DOREPLIFETIME(AToxicGameState, NombreGanador);
+	DOREPLIFETIME(AToxicGameState, PuntosParaGanar);
 }

@@ -32,6 +32,7 @@ void AToxicGameMode::IniciarPartida()
 	{
 		GS->TiempoRestante = TiempoTotal;
 		GS->bPartidaEnCurso = true;
+		GS->PuntosParaGanar = PuntosParaGanar;
 	}
 }
 
